@@ -1,4 +1,4 @@
-# BrauerMonoidFactorization
+# Brauer Monoid Factorization
 Example of usage:
 ```python
 from brauermonoid import *
