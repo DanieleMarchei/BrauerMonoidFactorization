@@ -273,6 +273,7 @@ def factorizeBN(X : Tangle):
             l = len(X)
             for edge in X.inv:
                 if edge == h: continue
+                if X.n_crossings[edge] >= size(edge): continue
                 X_new = X.copy()
                 for d in X_new.inv:
                     if d == h or d == edge: continue
