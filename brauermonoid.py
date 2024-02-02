@@ -32,10 +32,18 @@ class Tangle:
             self._calculate_crossings()
         
     def get_edge_from(self, node):
-       return self.inv_dict[node]
+        return self.inv_dict[node]
 
-    def get_n_crossings(self, edge):
-       return self.n_crossings[edge]
+    def get_n_crossings(self, edge = None):
+        if edge is not None:
+           return self.n_crossings[edge]
+        else:
+            nc = 0
+            for e in self.inv:
+                nc += self.get_n_crossings(e)
+            
+            return nc // 2
+    
 
     def _calculate_crossings(self):
         self.n_crossings = {}
@@ -262,7 +270,8 @@ def factorizeSN(X : Tangle):
 
   return F
 
-def factorizeBN(X : Tangle):
+def factorizeBN(X : Tangle, minimize_Ts = False):
+    n = len(X.inv)
     I = [int(f[1:]) for f in factorizeSN(tau(X))]
     if len(I) == 0: return ["I"]
     
@@ -271,12 +280,16 @@ def factorizeBN(X : Tangle):
         h = (i,i+1)
         if h in X:
             l = len(X)
+            if minimize_Ts:
+                min_X = (n*(n-1)//2 + 1, None)
             for edge in X.inv:
                 if edge == h: continue
                 if X.n_crossings[edge] >= size(edge): continue
+                
                 X_new = X.copy()
                 for d in X_new.inv:
                     if d == h or d == edge: continue
+
                     if X_new.are_intersecting_edges(d,edge):
                         X_new.n_crossings[d] -= 1
                 
@@ -299,9 +312,18 @@ def factorizeBN(X : Tangle):
                 
                 l_new = len(X_new)
                 if l_new == l - 1:
-                    F.append(f"U{i}")
-                    X = X_new
-                    break
+                    if minimize_Ts:
+                        nc = X_new.get_n_crossings()
+                        if nc < min_X[0]:
+                            min_X = (nc, X_new)
+                    else:
+                        break
+            
+            F.append(f"U{i}")
+            if minimize_Ts:
+                X = min_X[1]
+            else:
+                X = X_new
 
         else:
             compose_with_T(i, X)
@@ -312,3 +334,12 @@ def factorizeBN(X : Tangle):
             X.n_crossings[e2] -= 1
     
     return F
+        
+
+if __name__ == "__main__":
+
+    X = text_to_tangle("1:4,2:4',3:5,6:1',2':3',5':6'")
+    tau_X = tau(X)
+    print(factorizeSN(tau_X))
+    print(factorizeBN(X))
+

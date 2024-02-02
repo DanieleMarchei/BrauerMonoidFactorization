@@ -1,0 +1,92 @@
+fmod FACTOR is
+    protecting NAT .
+    sort Factor .
+    op T_ : NzNat -> Factor [ctor] .
+    op U_ : NzNat -> Factor [ctor] .
+
+    op idx : Factor -> NzNat .
+
+    var n : NzNat .
+
+    eq idx(T n) = n .
+    eq idx(U n) = n .
+
+endfm
+
+fmod FACTOR-LIST is
+    protecting FACTOR .
+
+    sorts FactorList NeFactorList .
+    subsorts Factor < NeFactorList < FactorList .
+
+    op I : -> FactorList [ctor] .
+
+    op _,_ : Factor Factor -> NeFactorList [assoc ctor id: I] .
+    op _,_ : Factor FactorList -> NeFactorList [ditto] .
+    op _,_ : FactorList Factor -> NeFactorList [ditto] .
+    
+    op _,_ : FactorList FactorList -> FactorList [ditto] .
+
+    op _,_ : Factor NeFactorList -> NeFactorList [ditto] .
+    op _,_ : NeFactorList Factor -> NeFactorList [ditto] .
+
+    op _,_ : NeFactorList FactorList -> NeFactorList [ditto] .
+    op _,_ : FactorList NeFactorList -> NeFactorList [ditto] .
+    
+    op _,_ : NeFactorList NeFactorList -> NeFactorList [ditto] .
+
+    op length : FactorList -> Nat [memo] .
+
+    op max_idx : FactorList -> Nat [memo] .
+
+    var P : Factor .
+    var F : FactorList .
+
+    eq length(I) = 0 .
+    eq length(P) = 1 .
+    eq length(F , P) = 1 + length(F) .
+
+    eq max_idx(P) = idx(P) .
+    ceq max_idx(F , P) = idx(P) if max_idx(F) < idx(P) .
+    eq max_idx(F , P) = max_idx(F) [owise] .
+
+endfm
+
+mod REW-RULES is
+
+    protecting FACTOR-LIST .
+    protecting INT .
+    protecting BOOL .
+
+    op not-interfers : NeFactorList NzNat -> Bool [memo] .
+
+    var i j i' i'' : NzNat .
+    var F F' F'' : FactorList .
+    var Nef Nef' : NeFactorList .
+    var P P' : Factor .
+
+    eq not-interfers(P, i) = abs(idx(P) - i) > 1 .
+    eq not-interfers((Nef , P) , i) = not-interfers(P , i) and not-interfers(Nef , i) .
+
+
+---------------------------------------------
+
+    rl  [delete] : T i , T i => I .
+    rl  [delete] : U i , U i => U i .
+    rl  [delete] : U i , T i => U i .
+    rl  [delete] : T i , U i => U i .
+    crl [delete] : U i , U j , U i => U i if abs(i - j) == 1 .
+    crl [delete] : T i , U j , U i => T j , U i if abs(i - j) == 1 .
+    crl [delete] : U i , U j , T i => U i , T j if abs(i - j) == 1 .
+    crl [delete] : U i , T j , T i => U i , U j if abs(i - j) == 1 .
+    crl [delete] : T i , T j , U i => U j , U i if abs(i - j) == 1 .
+    crl [delete] : U i , T j , U i => U i if abs(i - j) == 1 .
+
+    crl [move] : T i , T j , T i => T j , T i , T j if abs(i - j) == 1 .
+    crl [move] : T i , U j , T i => T j , U i , T j if abs(i - j) == 1 .
+    crl [move] : P , P' => P' , P if abs(idx(P) - idx(P')) > 1 .
+
+
+
+    
+endm
